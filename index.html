@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sim Night">
+<meta name="theme-color" content="#0F1D30">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Sim Night</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EDF2; --surface:#FFFFFF; --ink:#16212F; --muted:#5B6878; --line:#D3DAE3;
+  --board:#0F1D30; --board-line:#22344D; --board-ink:#C9D4E2; --digit:#FFB21F;
+  --lead:#1F7A55; --trail:#B7C1CD; --btn:#16212F; --btn-ink:#FFFFFF;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1420; --surface:#142233; --ink:#E7EDF4; --muted:#93A2B4; --line:#24364B;
+    --board:#050C16; --board-line:#1A2B42; --board-ink:#B9C6D6;
+    --lead:#3FBF86; --trail:#34485F; --btn:#FFB21F; --btn-ink:#10161F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1420; --surface:#142233; --ink:#E7EDF4; --muted:#93A2B4; --line:#24364B;
+  --board:#050C16; --board-line:#1A2B42; --board-ink:#B9C6D6;
+  --lead:#3FBF86; --trail:#34485F; --btn:#FFB21F; --btn-ink:#10161F;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Barlow,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1{font:800 40px/1 "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.01em;margin:6px 0 2px}
+.sub{color:var(--muted);margin:0 0 18px}
+.seg{display:grid;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+.seg button{appearance:none;border:0;background:none;color:var(--muted);font:700 18px/1 "Barlow Condensed",sans-serif;padding:10px 0;border-radius:9px;cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--board);color:var(--digit)}
+#tabs{grid-template-columns:repeat(4,1fr);margin-bottom:14px}
+.boxtabs{grid-template-columns:1fr 1fr;margin-bottom:10px}
+.pick{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.pick label{display:block;font-size:14px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.pick select,.pick textarea{width:100%;font:500 17px Barlow,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 10px}
+.pick textarea{font-size:16px;line-height:1.4;resize:vertical;margin-bottom:12px}
+.vs{display:flex;align-items:center;justify-content:space-between;margin:8px 0}
+.ghost{appearance:none;background:none;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:6px 14px;font:600 14px Barlow,sans-serif;cursor:pointer}
+.check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:15px}
+.check input{width:20px;height:20px;accent-color:var(--lead)}
+.roster{margin-top:10px;padding:0}
+.roster summary{padding:13px 14px;font-weight:600;cursor:pointer}
+.roster .in{padding:0 14px 14px}
+.actions{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;margin:14px 0 18px}
+.actions button{appearance:none;border:0;border-radius:12px;padding:15px 8px;font:700 20px/1 "Barlow Condensed",sans-serif;cursor:pointer}
+.primary{background:var(--btn);color:var(--btn-ink)}
+.secondary{background:var(--surface);color:var(--ink);border:1px solid var(--line)!important}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--digit);outline-offset:2px}
+.board{background:var(--board);color:var(--board-ink);border-radius:16px;padding:16px 16px 12px;box-shadow:inset 0 0 0 1px var(--board-line)}
+.status{font:700 16px "Barlow Condensed",sans-serif;color:var(--digit);opacity:.85;letter-spacing:.04em}
+.trow{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:6px 0}
+.trow .abbr{font:800 30px/1 "Barlow Condensed",sans-serif;color:#fff;min-width:62px}
+.trow .nm{font-size:14px;display:flex;align-items:center;min-width:0}
+.trow .nmt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.trow .sc{font:800 64px/1 "Barlow Condensed",sans-serif;color:var(--digit);font-variant-numeric:tabular-nums;text-shadow:0 0 18px rgba(255,178,31,.35)}
+.trow.lose .sc{color:#7C6A44;text-shadow:none}
+.trow.lose .abbr{color:var(--board-ink)}
+.win-tag{flex:none;font:600 12px Barlow,sans-serif;color:#0F1D30;background:var(--digit);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+.empty{padding:28px 4px;text-align:center;color:var(--board-ink)}
+.ls-wrap{overflow-x:auto;margin-top:10px;border-top:1px solid var(--board-line);padding-top:8px}
+.ls{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:15px}
+.ls th,.ls td{padding:4px 6px;text-align:center}
+.ls th{font-weight:500;color:#7E8EA3}
+.ls td:first-child,.ls th:first-child{text-align:left;color:#fff;font-weight:600}
+.ls td:last-child{color:var(--digit);font-weight:700}
+.star{margin-top:10px;border-top:1px solid var(--board-line);padding-top:10px;font-size:15px}
+.star b{color:#fff}
+h2{font:700 24px/1.1 "Barlow Condensed",sans-serif;margin:26px 0 10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.stats{padding:6px 14px}
+.srow{padding:10px 0;border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:0}
+.sline{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;font-variant-numeric:tabular-nums}
+.sline .l{text-align:left;font-weight:600}.sline .r{text-align:right;font-weight:600}
+.sline .lab{color:var(--muted);font-size:14px;text-align:center}
+.bar{display:flex;gap:3px;height:6px;margin-top:6px}
+.bar span{border-radius:3px;background:var(--trail);min-width:3px}
+.bar span.on{background:var(--lead)}
+.tbl-wrap{overflow-x:auto;margin-bottom:10px}
+.ptable{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ptable th{font-weight:600;color:var(--muted);text-align:right;padding:9px 8px;border-bottom:1px solid var(--line)}
+.ptable td{text-align:right;padding:9px 8px;border-bottom:1px solid var(--line)}
+.ptable tr:last-child td{border-bottom:0}
+.ptable th:first-child,.ptable td:first-child{text-align:left;padding-left:14px}
+.ptable td:first-child{font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.ptable td.dim{color:var(--muted);font-weight:500}
+.events{padding:4px 14px;margin:0;list-style:none}
+.events li{display:grid;grid-template-columns:64px 1fr auto;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+.events li:last-child{border-bottom:0}
+.events .when{color:var(--muted);font-variant-numeric:tabular-nums}
+.events .who{font-weight:700;margin-right:4px}
+.events .run{font-variant-numeric:tabular-nums;font-weight:600}
+.odds{padding:14px}
+.orow{margin-bottom:12px}
+.orow .top{display:flex;justify-content:space-between;font-weight:600}
+.orow .track{height:10px;border-radius:5px;background:var(--bg);margin-top:5px;overflow:hidden}
+.orow .fill{height:100%;background:var(--lead);border-radius:5px}
+.orow.draw .fill{background:var(--muted)}
+.note{font-size:14px;color:var(--muted);margin:4px 0 0}
+.foot{font-size:13px;color:var(--muted);margin-top:28px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Sim Night</h1>
+  <p class="sub">Pick two teams and play the game.</p>
+
+  <div class="seg" role="tablist" id="tabs">
+    <button role="tab" data-s="nba">NBA</button>
+    <button role="tab" data-s="nhl">NHL</button>
+    <button role="tab" data-s="soc">Soccer</button>
+    <button role="tab" data-s="nfl">NFL</button>
+  </div>
+
+  <section class="pick">
+    <label for="away">Away team</label>
+    <select id="away"></select>
+    <div class="vs"><span class="note">at</span><button class="ghost" id="swap" type="button">Swap teams</button></div>
+    <label for="home">Home team</label>
+    <select id="home"></select>
+    <label class="check"><input type="checkbox" id="neutral"> Neutral site (no home advantage)</label>
+  </section>
+
+  <details class="pick roster" id="rosterBox">
+    <summary>Edit player names</summary>
+    <div class="in">
+      <p class="note" id="rosterHint" style="margin-bottom:12px"></p>
+      <label for="awayRoster" id="awayRosterLabel">Away players</label>
+      <textarea id="awayRoster" rows="6" autocapitalize="words" autocomplete="off"></textarea>
+      <label for="homeRoster" id="homeRosterLabel">Home players</label>
+      <textarea id="homeRoster" rows="6" autocapitalize="words" autocomplete="off"></textarea>
+      <button class="ghost" id="resetRoster" type="button">Reset both to default names</button>
+    </div>
+  </details>
+
+  <div class="actions">
+    <button class="primary" id="play" type="button">Play game</button>
+    <button class="secondary" id="many" type="button">Run 1,000 games</button>
+  </div>
+
+  <section class="board" id="board" aria-live="polite">
+    <div class="empty">Pick your teams, then press Play game.</div>
+  </section>
+
+  <div id="details"></div>
+
+  <p class="foot">Team strength ratings (in brackets) are built-in estimates from recent seasons, not live data. Player names reflect rosters as of mid-2026, and rosters change, so use Edit player names to update them. Results are random, so every game plays out differently.</p>
+</main>
+
+<script>
+/* =========================================================
+   TEAMS: [abbr, name, rating, "players separated by |"]
+   Player order matters (see ROLES below).
+   ========================================================= */
+const ROLES={
+  nba:["Best player","2nd option","3rd option","4th starter","Center"],
+  nhl:["Top forward","Forward","Forward","Top defenseman","Defenseman","Goalie"],
+  soc:["Goalkeeper","Midfielder","Forward (takes penalties)","Forward","Winger or attacking mid"],
+  nfl:["Quarterback","Running back","Wide receiver 1","Wide receiver 2","Tight end"]
+};
+const TEAMS={
+nba:{"NBA":[
+["ATL","Atlanta Hawks",80,"Jalen Johnson|Dyson Daniels|Nickeil Alexander-Walker|CJ McCollum|Onyeka Okongwu"],
+["BOS","Boston Celtics",84,"Jayson Tatum|Jaylen Brown|Derrick White|Payton Pritchard|Neemias Queta"],
+["BKN","Brooklyn Nets",66,"Michael Porter Jr.|Egor Dëmin|Noah Clowney|Terance Mann|Nic Claxton"],
+["CHA","Charlotte Hornets",74,"LaMelo Ball|Brandon Miller|Kon Knueppel|Miles Bridges|Moussa Diabaté"],
+["CHI","Chicago Bulls",75,"Josh Giddey|Matas Buzelis|Tre Jones|Patrick Williams|Jalen Smith"],
+["CLE","Cleveland Cavaliers",88,"Donovan Mitchell|James Harden|Evan Mobley|Jaylon Tyson|Jarrett Allen"],
+["DAL","Dallas Mavericks",77,"Cooper Flagg|Kyrie Irving|Klay Thompson|P.J. Washington|Dereck Lively II"],
+["DEN","Denver Nuggets",89,"Nikola Jokić|Jamal Murray|Aaron Gordon|Cameron Johnson|Christian Braun"],
+["DET","Detroit Pistons",86,"Cade Cunningham|Ausar Thompson|Tobias Harris|Duncan Robinson|Jalen Duren"],
+["GSW","Golden State Warriors",82,"Stephen Curry|Jimmy Butler|Brandin Podziemski|Moses Moody|Draymond Green"],
+["HOU","Houston Rockets",86,"Kevin Durant|Alperen Şengün|Amen Thompson|Jabari Smith Jr.|Reed Sheppard"],
+["IND","Indiana Pacers",72,"Tyrese Haliburton|Pascal Siakam|Andrew Nembhard|Aaron Nesmith|Ivica Zubac"],
+["LAC","LA Clippers",82,"Kawhi Leonard|Darius Garland|Kris Dunn|John Collins|Brook Lopez"],
+["LAL","Los Angeles Lakers",84,"Luka Dončić|Austin Reaves|Marcus Smart|Rui Hachimura|Deandre Ayton"],
+["MEM","Memphis Grizzlies",78,"Ja Morant|Jaylen Wells|Cedric Coward|Santi Aldama|Zach Edey"],
+["MIA","Miami Heat",79,"Tyler Herro|Bam Adebayo|Norman Powell|Andrew Wiggins|Kel'el Ware"],
+["MIL","Milwaukee Bucks",78,"Giannis Antetokounmpo|Kevin Porter Jr.|Kyle Kuzma|Ryan Rollins|Myles Turner"],
+["MIN","Minnesota Timberwolves",85,"Anthony Edwards|Julius Randle|Jaden McDaniels|Donte DiVincenzo|Rudy Gobert"],
+["NOP","New Orleans Pelicans",68,"Zion Williamson|Trey Murphy III|Jordan Poole|Herbert Jones|Derik Queen"],
+["NYK","New York Knicks",87,"Jalen Brunson|Karl-Anthony Towns|Mikal Bridges|OG Anunoby|Josh Hart"],
+["OKC","Oklahoma City Thunder",95,"Shai Gilgeous-Alexander|Jalen Williams|Chet Holmgren|Luguentz Dort|Isaiah Hartenstein"],
+["ORL","Orlando Magic",83,"Paolo Banchero|Franz Wagner|Desmond Bane|Jalen Suggs|Wendell Carter Jr."],
+["PHI","Philadelphia 76ers",79,"Tyrese Maxey|Joel Embiid|Paul George|VJ Edgecombe|Kelly Oubre Jr."],
+["PHX","Phoenix Suns",78,"Devin Booker|Jalen Green|Dillon Brooks|Grayson Allen|Mark Williams"],
+["POR","Portland Trail Blazers",75,"Deni Avdija|Shaedon Sharpe|Jrue Holiday|Scoot Henderson|Donovan Clingan"],
+["SAC","Sacramento Kings",70,"Domantas Sabonis|Zach LaVine|DeMar DeRozan|Russell Westbrook|Keegan Murray"],
+["SAS","San Antonio Spurs",87,"Victor Wembanyama|De'Aaron Fox|Stephon Castle|Dylan Harper|Devin Vassell"],
+["TOR","Toronto Raptors",80,"Scottie Barnes|Brandon Ingram|RJ Barrett|Immanuel Quickley|Jakob Poeltl"],
+["UTA","Utah Jazz",68,"Lauri Markkanen|Keyonte George|Jaren Jackson Jr.|Ace Bailey|Walker Kessler"],
+["WAS","Washington Wizards",64,"Trae Young|Alex Sarr|Bilal Coulibaly|Kyshawn George|Bub Carrington"]]},
+nhl:{"NHL":[
+["ANA","Anaheim Ducks",81,"Leo Carlsson|Cutter Gauthier|Troy Terry|Jackson LaCombe|Radko Gudas|Lukáš Dostál"],
+["BOS","Boston Bruins",77,"David Pastrňák|Morgan Geekie|Elias Lindholm|Charlie McAvoy|Hampus Lindholm|Jeremy Swayman"],
+["BUF","Buffalo Sabres",81,"Tage Thompson|Alex Tuch|Jack Quinn|Rasmus Dahlin|Owen Power|Ukko-Pekka Luukkonen"],
+["CGY","Calgary Flames",75,"Nazem Kadri|Jonathan Huberdeau|Matt Coronato|MacKenzie Weegar|Kevin Bahl|Dustin Wolf"],
+["CAR","Carolina Hurricanes",88,"Sebastian Aho|Seth Jarvis|Nikolaj Ehlers|Jaccob Slavin|K'Andre Miller|Frederik Andersen"],
+["CHI","Chicago Blackhawks",70,"Connor Bedard|Frank Nazar|Tyler Bertuzzi|Alex Vlasic|Artyom Levshunov|Spencer Knight"],
+["COL","Colorado Avalanche",92,"Nathan MacKinnon|Martin Nečas|Brock Nelson|Cale Makar|Devon Toews|Mackenzie Blackwood"],
+["CBJ","Columbus Blue Jackets",78,"Kirill Marchenko|Adam Fantilli|Sean Monahan|Zach Werenski|Ivan Provorov|Elvis Merzļikins"],
+["DAL","Dallas Stars",88,"Jason Robertson|Mikko Rantanen|Wyatt Johnston|Miro Heiskanen|Thomas Harley|Jake Oettinger"],
+["DET","Detroit Red Wings",79,"Dylan Larkin|Lucas Raymond|Alex DeBrincat|Moritz Seider|Simon Edvinsson|John Gibson"],
+["EDM","Edmonton Oilers",87,"Connor McDavid|Leon Draisaitl|Zach Hyman|Evan Bouchard|Mattias Ekholm|Tristan Jarry"],
+["FLA","Florida Panthers",86,"Aleksander Barkov|Sam Reinhart|Matthew Tkachuk|Aaron Ekblad|Gustav Forsling|Sergei Bobrovsky"],
+["LAK","Los Angeles Kings",82,"Adrian Kempe|Kevin Fiala|Quinton Byfield|Drew Doughty|Brandt Clarke|Darcy Kuemper"],
+["MIN","Minnesota Wild",85,"Kirill Kaprizov|Matt Boldy|Joel Eriksson Ek|Quinn Hughes|Brock Faber|Filip Gustavsson"],
+["MTL","Montréal Canadiens",82,"Nick Suzuki|Cole Caufield|Ivan Demidov|Lane Hutson|Noah Dobson|Jakub Dobeš"],
+["NSH","Nashville Predators",73,"Filip Forsberg|Steven Stamkos|Jonathan Marchessault|Roman Josi|Brady Skjei|Juuse Saros"],
+["NJD","New Jersey Devils",82,"Jack Hughes|Jesper Bratt|Nico Hischier|Dougie Hamilton|Luke Hughes|Jacob Markström"],
+["NYI","New York Islanders",79,"Mathew Barzal|Bo Horvat|Kyle Palmieri|Matthew Schaefer|Ryan Pulock|Ilya Sorokin"],
+["NYR","New York Rangers",78,"Mika Zibanejad|J.T. Miller|Alexis Lafrenière|Adam Fox|Vladislav Gavrikov|Igor Shesterkin"],
+["OTT","Ottawa Senators",80,"Tim Stützle|Brady Tkachuk|Drake Batherson|Jake Sanderson|Thomas Chabot|Linus Ullmark"],
+["PHI","Philadelphia Flyers",78,"Travis Konecny|Trevor Zegras|Matvei Michkov|Travis Sanheim|Jamie Drysdale|Dan Vladař"],
+["PIT","Pittsburgh Penguins",79,"Sidney Crosby|Evgeni Malkin|Bryan Rust|Erik Karlsson|Kris Letang|Stuart Skinner"],
+["SJS","San Jose Sharks",74,"Macklin Celebrini|Will Smith|Tyler Toffoli|Dmitry Orlov|Mario Ferraro|Yaroslav Askarov"],
+["SEA","Seattle Kraken",75,"Jordan Eberle|Matty Beniers|Jared McCann|Vince Dunn|Brandon Montour|Joey Daccord"],
+["STL","St. Louis Blues",77,"Robert Thomas|Jordan Kyrou|Pavel Buchnevich|Colton Parayko|Justin Faulk|Jordan Binnington"],
+["TBL","Tampa Bay Lightning",87,"Nikita Kucherov|Brayden Point|Jake Guentzel|Victor Hedman|Ryan McDonagh|Andrei Vasilevskiy"],
+["TOR","Toronto Maple Leafs",84,"Auston Matthews|William Nylander|John Tavares|Morgan Rielly|Chris Tanev|Anthony Stolarz"],
+["UTA","Utah Mammoth",81,"Clayton Keller|Dylan Guenther|Logan Cooley|Mikhail Sergachev|John Marino|Karel Vejmelka"],
+["VAN","Vancouver Canucks",76,"Elias Pettersson|Brock Boeser|Conor Garland|Filip Hronek|Marcus Pettersson|Thatcher Demko"],
+["VGK","Vegas Golden Knights",86,"Jack Eichel|Mitch Marner|Mark Stone|Shea Theodore|Noah Hanifin|Adin Hill"],
+["WSH","Washington Capitals",85,"Dylan Strome|Tom Wilson|Aliaksei Protas|John Carlson|Jakob Chychrun|Logan Thompson"],
+["WPG","Winnipeg Jets",82,"Kyle Connor|Mark Scheifele|Gabriel Vilardi|Josh Morrissey|Neal Pionk|Connor Hellebuyck"]]},
+soc:{"Premier League (2025–26 clubs)":[
+["ARS","Arsenal",92,"David Raya|Declan Rice|Bukayo Saka|Viktor Gyökeres|Eberechi Eze"],
+["AVL","Aston Villa",84,"Emiliano Martínez|Youri Tielemans|Ollie Watkins|Morgan Rogers|John McGinn"],
+["BOU","Bournemouth",78,"Đorđe Petrović|Tyler Adams|Evanilson|Justin Kluivert|Marcus Tavernier"],
+["BRE","Brentford",77,"Caoimhín Kelleher|Mikkel Damsgaard|Igor Thiago|Kevin Schade|Keane Lewis-Potter"],
+["BHA","Brighton",79,"Bart Verbruggen|Carlos Baleba|Danny Welbeck|Kaoru Mitoma|Yankuba Minteh"],
+["BUR","Burnley",68,"Martin Dúbravka|Josh Cullen|Lyle Foster|Zian Flemming|Jaidon Anthony"],
+["CHE","Chelsea",85,"Robert Sánchez|Moisés Caicedo|Cole Palmer|João Pedro|Enzo Fernández"],
+["CRY","Crystal Palace",80,"Dean Henderson|Adam Wharton|Jean-Philippe Mateta|Ismaïla Sarr|Yeremy Pino"],
+["EVE","Everton",77,"Jordan Pickford|James Garner|Thierno Barry|Iliman Ndiaye|Kiernan Dewsbury-Hall"],
+["FUL","Fulham",77,"Bernd Leno|Sander Berge|Raúl Jiménez|Alex Iwobi|Harry Wilson"],
+["LEE","Leeds United",72,"Lucas Perri|Ethan Ampadu|Dominic Calvert-Lewin|Noah Okafor|Anton Stach"],
+["LIV","Liverpool",87,"Alisson|Dominik Szoboszlai|Alexander Isak|Hugo Ekitiké|Florian Wirtz"],
+["MCI","Manchester City",90,"Gianluigi Donnarumma|Rodri|Erling Haaland|Phil Foden|Antoine Semenyo"],
+["MUN","Manchester United",80,"Senne Lammens|Bruno Fernandes|Benjamin Šeško|Bryan Mbeumo|Matheus Cunha"],
+["NEW","Newcastle United",82,"Nick Pope|Bruno Guimarães|Nick Woltemade|Anthony Gordon|Harvey Barnes"],
+["NFO","Nottingham Forest",76,"Matz Sels|Elliot Anderson|Chris Wood|Morgan Gibbs-White|Callum Hudson-Odoi"],
+["SUN","Sunderland",75,"Robin Roefs|Granit Xhaka|Wilson Isidor|Enzo Le Fée|Chemsdine Talbi"],
+["TOT","Tottenham Hotspur",77,"Guglielmo Vicario|João Palhinha|Dominic Solanke|Mohammed Kudus|Xavi Simons"],
+["WHU","West Ham United",72,"Alphonse Areola|Tomáš Souček|Jarrod Bowen|Crysencio Summerville|Mateus Fernandes"],
+["WOL","Wolves",66,"José Sá|André|Tolu Arokodare|Hwang Hee-chan|Jhon Arias"]],
+"European giants":[
+["ATM","Atlético Madrid",85,"Jan Oblak|Koke|Julián Álvarez|Antoine Griezmann|Álex Baena"],
+["BAR","Barcelona",91,"Joan García|Pedri|Robert Lewandowski|Lamine Yamal|Raphinha"],
+["BAY","Bayern Munich",92,"Manuel Neuer|Joshua Kimmich|Harry Kane|Michael Olise|Luis Díaz"],
+["BVB","Borussia Dortmund",83,"Gregor Kobel|Julian Brandt|Serhou Guirassy|Karim Adeyemi|Maximilian Beier"],
+["INT","Inter Milan",88,"Yann Sommer|Nicolò Barella|Lautaro Martínez|Marcus Thuram|Hakan Çalhanoğlu"],
+["JUV","Juventus",83,"Michele Di Gregorio|Manuel Locatelli|Dušan Vlahović|Kenan Yıldız|Jonathan David"],
+["B04","Bayer Leverkusen",82,"Mark Flekken|Aleix García|Patrik Schick|Malik Tillman|Ibrahim Maza"],
+["NAP","Napoli",85,"Alex Meret|Stanislav Lobotka|Rasmus Højlund|Scott McTominay|Kevin De Bruyne"],
+["PSG","Paris Saint-Germain",92,"Lucas Chevalier|Vitinha|Ousmane Dembélé|Khvicha Kvaratskhelia|Désiré Doué"],
+["RMA","Real Madrid",90,"Thibaut Courtois|Federico Valverde|Kylian Mbappé|Vinícius Júnior|Jude Bellingham"]]},
+nfl:{"NFL":[
+["ARI","Arizona Cardinals",70,"Kyler Murray|James Conner|Marvin Harrison Jr.|Michael Wilson|Trey McBride"],
+["ATL","Atlanta Falcons",76,"Michael Penix Jr.|Bijan Robinson|Drake London|Darnell Mooney|Kyle Pitts"],
+["BAL","Baltimore Ravens",86,"Lamar Jackson|Derrick Henry|Zay Flowers|Rashod Bateman|Mark Andrews"],
+["BUF","Buffalo Bills",88,"Josh Allen|James Cook|Khalil Shakir|Keon Coleman|Dalton Kincaid"],
+["CAR","Carolina Panthers",76,"Bryce Young|Chuba Hubbard|Tetairoa McMillan|Xavier Legette|Tommy Tremble"],
+["CHI","Chicago Bears",82,"Caleb Williams|D'Andre Swift|DJ Moore|Rome Odunze|Colston Loveland"],
+["CIN","Cincinnati Bengals",76,"Joe Burrow|Chase Brown|Ja'Marr Chase|Tee Higgins|Mike Gesicki"],
+["CLE","Cleveland Browns",70,"Shedeur Sanders|Quinshon Judkins|Jerry Jeudy|Cedric Tillman|Harold Fannin Jr."],
+["DAL","Dallas Cowboys",78,"Dak Prescott|Javonte Williams|CeeDee Lamb|George Pickens|Jake Ferguson"],
+["DEN","Denver Broncos",88,"Bo Nix|J.K. Dobbins|Courtland Sutton|Troy Franklin|Evan Engram"],
+["DET","Detroit Lions",87,"Jared Goff|Jahmyr Gibbs|Amon-Ra St. Brown|Jameson Williams|Sam LaPorta"],
+["GB","Green Bay Packers",84,"Jordan Love|Josh Jacobs|Christian Watson|Romeo Doubs|Tucker Kraft"],
+["HOU","Houston Texans",84,"C.J. Stroud|Woody Marks|Nico Collins|Jayden Higgins|Dalton Schultz"],
+["IND","Indianapolis Colts",80,"Daniel Jones|Jonathan Taylor|Michael Pittman Jr.|Alec Pierce|Tyler Warren"],
+["JAX","Jacksonville Jaguars",84,"Trevor Lawrence|Travis Etienne Jr.|Brian Thomas Jr.|Jakobi Meyers|Brenton Strange"],
+["KC","Kansas City Chiefs",85,"Patrick Mahomes|Isiah Pacheco|Rashee Rice|Xavier Worthy|Noah Gray"],
+["LV","Las Vegas Raiders",66,"Geno Smith|Ashton Jeanty|Tre Tucker|Jack Bech|Brock Bowers"],
+["LAC","Los Angeles Chargers",83,"Justin Herbert|Omarion Hampton|Ladd McConkey|Quentin Johnston|Oronde Gadsden II"],
+["LAR","Los Angeles Rams",89,"Matthew Stafford|Kyren Williams|Puka Nacua|Davante Adams|Tyler Higbee"],
+["MIA","Miami Dolphins",73,"Tua Tagovailoa|De'Von Achane|Jaylen Waddle|Malik Washington|Darren Waller"],
+["MIN","Minnesota Vikings",79,"J.J. McCarthy|Aaron Jones|Justin Jefferson|Jordan Addison|T.J. Hockenson"],
+["NE","New England Patriots",87,"Drake Maye|TreVeyon Henderson|Stefon Diggs|Kayshon Boutte|Hunter Henry"],
+["NO","New Orleans Saints",70,"Tyler Shough|Alvin Kamara|Chris Olave|Devaughn Vele|Juwan Johnson"],
+["NYG","New York Giants",70,"Jaxson Dart|Cam Skattebo|Malik Nabers|Wan'Dale Robinson|Theo Johnson"],
+["NYJ","New York Jets",68,"Justin Fields|Breece Hall|Garrett Wilson|Josh Reynolds|Mason Taylor"],
+["PHI","Philadelphia Eagles",88,"Jalen Hurts|Saquon Barkley|A.J. Brown|DeVonta Smith|Dallas Goedert"],
+["PIT","Pittsburgh Steelers",81,"Aaron Rodgers|Jaylen Warren|DK Metcalf|Calvin Austin III|Pat Freiermuth"],
+["SF","San Francisco 49ers",84,"Brock Purdy|Christian McCaffrey|Jauan Jennings|Ricky Pearsall|George Kittle"],
+["SEA","Seattle Seahawks",90,"Sam Darnold|Kenneth Walker III|Jaxon Smith-Njigba|Cooper Kupp|AJ Barner"],
+["TB","Tampa Bay Buccaneers",80,"Baker Mayfield|Bucky Irving|Mike Evans|Emeka Egbuka|Cade Otton"],
+["TEN","Tennessee Titans",68,"Cam Ward|Tony Pollard|Calvin Ridley|Elic Ayomanor|Chig Okonkwo"],
+["WAS","Washington Commanders",74,"Jayden Daniels|Jacory Croskey-Merritt|Terry McLaurin|Deebo Samuel|Zach Ertz"]]}
+};
+const DEFAULTS={nba:["BOS","OKC"],nhl:["TOR","EDM"],soc:["LIV","ARS"],nfl:["KC","BUF"]};
+
+/* ---------- Helpers ---------- */
+const R=Math.random;
+const rnd=(a,b)=>a+R()*(b-a);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function normal(m,s){let u=0,v=0;while(!u)u=R();while(!v)v=R();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function poisson(l){if(l<=0)return 0;const L=Math.exp(-l);let k=0,p=1;do{k++;p*=R()}while(p>L);return k-1}
+function binom(n,p){let k=0;for(let i=0;i<n;i++)if(R()<p)k++;return k}
+// weighted pick, optionally excluding some indices
+function pick(w,ex){ex=ex||[];let s=0,last=-1;for(let i=0;i<w.length;i++)if(!ex.includes(i)&&w[i]>0){s+=w[i];last=i}
+  if(last<0)return 0;let r=R()*s;for(let i=0;i<w.length;i++){if(ex.includes(i)||w[i]<=0)continue;r-=w[i];if(r<=0)return i}return last}
+// split an integer total into n integer parts
+function split(total,n){if(n<=0)return[];const r=Array.from({length:n},()=>0.3+R());const s=r.reduce((a,b)=>a+b,0);
+  const out=r.map(x=>Math.round(total*x/s));out[0]+=total-out.reduce((a,b)=>a+b,0);return out}
+const pct=(m,a)=>a?Math.round(100*m/a)+"%":"–";
+const mmss=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+const plural=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
+const edge=(A,B,neutral,H)=>(B.r-A.r+(neutral?0:H))/100; // positive favours home team (B)
+const mkRow=T=>(label,f,v,low)=>({label,a:String(f(T[0])),b:String(f(T[1])),av:v?v(T[0]):+f(T[0]),bv:v?v(T[1]):+f(T[1]),low:!!low});
+const last=s=>s.split(" ").slice(-1)[0];
+
+/* =========================================================
+   NBA: possession by possession
+   ========================================================= */
+function simNBA(A,B,neutral){
+  const e=edge(A,B,neutral,2.5);
+  const USG=[.24,.19,.16,.12,.10,.19],REB=[.11,.12,.15,.18,.24,.20],AST=[.30,.20,.14,.10,.07,.19],BLK=[.08,.10,.15,.22,.30,.15],STL=[.2,.2,.18,.15,.1,.17];
+  const P=n=>({n,min:0,pts:0,reb:0,ast:0,fgm:0,fga:0,tpm:0,tpa:0,ftm:0,fta:0,stl:0,blk:0,tov:0});
+  const T=[A,B].map((t,i)=>({t,f:1+0.25*(i?e:-e),pts:0,fgm:0,fga:0,tpm:0,tpa:0,ftm:0,fta:0,or:0,dr:0,ast:0,tov:0,stl:0,blk:0,per:[],
+    pl:[...t.p.slice(0,5).map(P),P("Bench")]}));
+  const ft=(o,p,n)=>{for(let i=0;i<n;i++){o.fta++;p.fta++;if(R()<0.78){o.ftm++;o.pts++;p.ftm++;p.pts++}}};
+  function poss(o,d){
+    for(let k=0;k<4;k++){
+      const si=pick(USG),p=o.pl[si];
+      if(k===0&&R()<0.125*(2-o.f)){o.tov++;p.tov++;if(R()<0.55){d.stl++;d.pl[pick(STL)].stl++}return}
+      if(k===0&&R()<0.14){ft(o,p,2);return}
+      const three=R()<0.40;
+      o.fga++;p.fga++;if(three){o.tpa++;p.tpa++}
+      if(!three&&R()<0.06){d.blk++;d.pl[pick(BLK)].blk++}
+      else if(R()<(three?0.37:0.56)*o.f){
+        o.fgm++;p.fgm++;if(three){o.tpm++;p.tpm++}
+        const v=three?3:2;o.pts+=v;p.pts+=v;
+        if(R()<0.62){o.ast++;o.pl[pick(AST,si===5?[]:[si])].ast++}
+        if(!three&&R()<0.05)ft(o,p,1);
+        return;
+      }
+      if(R()<0.24*o.f){o.or++;o.pl[pick(REB)].reb++;continue}
+      d.dr++;d.pl[pick(REB)].reb++;return;
+    }
+  }
+  const pace=normal(100,4);
+  const play=n=>{const s=[T[0].pts,T[1].pts];for(let i=0;i<n;i++){poss(T[0],T[1]);poss(T[1],T[0])}T.forEach((t,j)=>t.per.push(t.pts-s[j]))};
+  for(let q=0;q<4;q++)play(Math.round(pace/4+normal(0,1.2)));
+  let ot=0;
+  while(T[0].pts===T[1].pts){ot++;play(Math.round(pace*5/48))}
+  T.forEach(o=>{let s=0;[35,34,33,31,29].forEach((m,i)=>{const v=Math.round(clamp(normal(m,2.5)+ot*3.5,22,48+5*ot));o.pl[i].min=v;s+=v});o.pl[5].min=240+25*ot-s});
+  const labels=["1","2","3","4"];for(let i=1;i<=ot;i++)labels.push(ot>1?"OT"+i:"OT");
+  const winner=T[0].pts>T[1].pts?0:1;
+  // top performer
+  let top=null,best=-1e9;
+  T.forEach((o,i)=>o.pl.slice(0,5).forEach(p=>{const sc=p.pts+1.2*p.reb+1.5*p.ast+2*(p.stl+p.blk)-p.tov+(i===winner?5:0);
+    if(sc>best){best=sc;top={n:p.n,team:o.t.a,line:`${plural(p.pts,"point")}, ${plural(p.reb,"rebound")}, ${plural(p.ast,"assist")}`}}}));
+  const row=mkRow(T);
+  return{teams:[A,B],scores:[T[0].pts,T[1].pts],labels,per:[T[0].per,T[1].per],
+    status:ot?(ot>1?`Final/${ot}OT`:"Final/OT"):"Final",winner,events:null,top,
+    box:T.map(o=>[{cols:["Player","MIN","PTS","REB","AST","FG","3PT","FT","STL","BLK","TO"],
+      rows:o.pl.map((p,i)=>({dim:i===5,c:[p.n,p.min,p.pts,p.reb,p.ast,`${p.fgm}-${p.fga}`,`${p.tpm}-${p.tpa}`,`${p.ftm}-${p.fta}`,p.stl,p.blk,p.tov]}))}]),
+    stats:[
+      row("Field goals",o=>`${pct(o.fgm,o.fga)} (${o.fgm}/${o.fga})`,o=>o.fgm/o.fga),
+      row("3-pointers",o=>`${pct(o.tpm,o.tpa)} (${o.tpm}/${o.tpa})`,o=>o.tpm),
+      row("Free throws",o=>`${o.ftm}/${o.fta}`,o=>o.ftm),
+      row("Rebounds",o=>o.or+o.dr),
+      row("Offensive rebounds",o=>o.or),
+      row("Assists",o=>o.ast),
+      row("Turnovers",o=>o.tov,null,true),
+      row("Steals",o=>o.stl),
+      row("Blocks",o=>o.blk)]};
+}
+
+/* =========================================================
+   NHL: shots, penalties, overtime, shootout
+   ========================================================= */
+function simNHL(A,B,neutral){
+  const e=edge(A,B,neutral,2);
+  const SHOT=[.14,.12,.11,.09,.08,.46],PPG=[.20,.17,.14,.08,.05,.36],AST=[.15,.13,.12,.11,.10,.39];
+  const S=n=>({n,g:0,a:0,sog:0,pim:0,toi:0});
+  const T=[A,B].map((t,i)=>({t,es:i?e:-e,g:0,real:0,sog:0,ppg:0,ppo:0,pim:0,hits:poisson(22),blk:poisson(14),fow:0,per:[],
+    sk:[...t.p.slice(0,5).map(S),S("Depth players")],gk:{n:t.p[5]}}));
+  const fo=Math.max(40,poisson(58));T[1].fow=binom(fo,clamp(0.5+0.15*e,0.35,0.65));T[0].fow=fo-T[1].fow;
+  const events=[];const labels=["1","2","3"];
+  const nm=(o,i)=>i===5?"depth player":last(o.sk[i].n);
+  function score(g,label){
+    const o=T[g.i];o.g++;o.real++;o.sk[g.s].g++;
+    const as=[];
+    if(R()<0.9){const a1=pick(AST,g.s===5?[]:[g.s]);as.push(a1);
+      if(R()<0.7){as.push(pick(AST,[g.s,a1]))}}
+    as.forEach(a=>o.sk[a].a++);
+    const txt=`${g.pp?"PPG":"Goal"}: ${nm(o,g.s)}${as.length?" ("+as.map(a=>nm(o,a)).join(", ")+")":" (unassisted)"}`;
+    events.push({when:label,i:g.i,text:txt,run:`${T[0].g}–${T[1].g}`});
+  }
+  for(let p=0;p<3;p++){
+    const s=[T[0].g,T[1].g],list=[];
+    for(let i=0;i<2;i++){
+      const o=T[i],d=T[1-i];
+      const shots=poisson(9.8*(1+0.6*o.es));
+      for(let k=0;k<shots;k++){const si=pick(SHOT);o.sog++;o.sk[si].sog++;if(R()<0.095*(1+0.8*o.es))list.push({t:rnd(0.2,19.9),i,s:si,pp:false})}
+      const pens=poisson(1.15);
+      for(let k=0;k<pens;k++){o.pim+=2;o.sk[pick([1,1,1,1,1,3])].pim+=2;d.ppo++;
+        if(R()<0.2*(1+0.6*d.es)){const si=pick(PPG);d.sog++;d.sk[si].sog++;d.ppg++;list.push({t:rnd(0.2,19.9),i:1-i,s:si,pp:true})}}
+    }
+    list.sort((a,b)=>a.t-b.t).forEach(g=>score(g,`P${p+1} ${mmss(g.t*60)}`));
+    T.forEach((t,j)=>t.per.push(t.g-s[j]));
+  }
+  let status="Final",otMin=0;
+  if(T[0].g===T[1].g){
+    labels.push("OT");
+    const shots=[];
+    for(let i=0;i<2;i++){const o=T[i];const n=poisson(2.6*(1+0.6*o.es));
+      for(let k=0;k<n;k++)shots.push({t:rnd(0.1,4.95),i,s:pick(SHOT),goal:R()<0.13*(1+0.8*o.es)})}
+    shots.sort((a,b)=>a.t-b.t);
+    const win=shots.find(s=>s.goal);
+    for(const s of shots){if(win&&s.t>win.t)break;T[s.i].sog++;T[s.i].sk[s.s].sog++}
+    if(win){otMin=win.t;score({i:win.i,s:win.s,pp:false},`OT ${mmss(win.t*60)}`);
+      events[events.length-1].text=events[events.length-1].text.replace(/^Goal/,"OT winner");
+      T[win.i].per.push(1);T[1-win.i].per.push(0);status="Final/OT"}
+    else{
+      otMin=5;T.forEach(t=>t.per.push(0));labels.push("SO");
+      const ps=T.map(t=>clamp(0.32*(1+0.5*t.es),0.15,0.5));let a=0,b=0,r=0;
+      while(r<3||a===b){a+=R()<ps[0]?1:0;b+=R()<ps[1]?1:0;r++;if(r>20&&a===b)a++}
+      const w=a>b?0:1;T[w].g++;T[w].per.push(1);T[1-w].per.push(0);
+      events.push({when:"SO",i:w,text:`Wins shootout ${Math.max(a,b)}–${Math.min(a,b)}`,run:`${T[0].g}–${T[1].g}`});
+      status="Final/SO";
+    }
+  }
+  T.forEach(o=>{o.sk.forEach((p,i)=>{p.toi=i<3?normal(19.5,1.5):i<5?normal(23.5,1.5):0;p.toi=(p.toi+otMin*0.3)*60});
+    const opp=T[1-T.indexOf(o)];o.gk.sa=opp.sog;o.gk.ga=opp.real;o.gk.sv=opp.sog-opp.real});
+  const winner=T[0].g>T[1].g?0:1;
+  let top=null,best=-1e9;
+  T.forEach((o,i)=>{o.sk.slice(0,5).forEach(p=>{const sc=3*p.g+2*p.a+0.3*p.sog+(i===winner?1:0);
+      if(sc>best){best=sc;top={n:p.n,team:o.t.a,line:`${plural(p.g,"goal")}, ${plural(p.a,"assist")}, ${plural(p.sog,"shot")}`}}});
+    const g=o.gk,sc=(g.ga<=1?2:0)+g.sv*0.12-g.ga*0.8+(i===winner?1:0);
+    if(sc>best){best=sc;top={n:g.n,team:o.t.a,line:`${plural(g.sv,"save")} on ${plural(g.sa,"shot")}`}}});
+  const row=mkRow(T);
+  const sv=o=>o.gk.sa?o.gk.sv/o.gk.sa:1;
+  return{teams:[A,B],scores:[T[0].g,T[1].g],labels,per:[T[0].per,T[1].per],status,winner,events,top,
+    box:T.map(o=>[
+      {cols:["Skater","G","A","PTS","SOG","PIM","TOI"],rows:o.sk.map((p,i)=>({dim:i===5,c:[p.n,p.g,p.a,p.g+p.a,p.sog,p.pim,i===5?"–":mmss(p.toi)]}))},
+      {cols:["Goalie","SA","SV","GA","SV%"],rows:[{c:[o.gk.n,o.gk.sa,o.gk.sv,o.gk.ga,sv(o).toFixed(3).replace(/^0/,"")]}]}]),
+    stats:[
+      row("Shots on goal",o=>o.sog),
+      row("Power play",o=>`${o.ppg}/${o.ppo}`,o=>o.ppg),
+      row("Save percentage",o=>sv(o).toFixed(3).replace(/^0/,""),o=>sv(o)),
+      row("Faceoffs won",o=>pct(o.fow,fo),o=>o.fow),
+      row("Hits",o=>o.hits),
+      row("Blocked shots",o=>o.blk),
+      row("Penalty minutes",o=>o.pim,null,true)]};
+}
+
+/* =========================================================
+   Soccer: minute by minute with expected goals
+   ========================================================= */
+function simSOC(A,B,neutral){
+  const e=edge(A,B,neutral,5);
+  const SH=[.12,.22,.20,.16,.30],AS=[.20,.18,.16,.14,.32];
+  const O=n=>({n,g:0,a:0,sh:0,rt:0});
+  const T=[A,B].map((t,i)=>{const es=i?e:-e;const fouls=poisson(11.5*(1-0.2*es));
+    return{t,es,g:0,sh:0,sot:0,xg:0,cor:poisson(5*(1+0.6*es)),fouls,yc:binom(fouls,0.15),rc:R()<0.02?1:0,off:poisson(2),per:[0,0],
+      pl:[...t.p.slice(1,5).map(O),O("Other players")],gk:{n:t.p[0],sv:0,ga:0,rt:0}}});
+  const pos1=Math.round(clamp(50+30*e+normal(0,4),25,75));T[1].pos=pos1;T[0].pos=100-pos1;
+  T.forEach(o=>{o.passes=Math.round(o.pos*9.5+normal(0,25));o.pacc=Math.round(clamp(80+20*o.es+normal(0,3),62,93))});
+  const list=[];
+  const assist=s=>R()<0.7?pick(AS,s===4?[]:[s]):-1;
+  for(let m=1;m<=93;m++){
+    for(let i=0;i<2;i++){const o=T[i];
+      if(R()<0.135*(1+o.es)){const s=pick(SH);o.sh++;o.pl[s].sh++;
+        const q=clamp(-Math.log(R())*0.10*(1+o.es),0.01,0.65);o.xg+=q;
+        if(R()<q){o.sot++;list.push({m,i,s,a:assist(s),type:"goal"})}else if(R()<0.27)o.sot++}}
+  }
+  for(let i=0;i<2;i++){const o=T[i];if(R()<0.11*(1+0.3*o.es)){o.sh++;o.pl[1].sh++;o.xg+=0.76;const m=Math.ceil(rnd(1,90));
+    if(R()<0.76){o.sot++;list.push({m,i,s:1,a:-1,type:"pen"})}else{if(R()<0.6)o.sot++;list.push({m,i,s:1,type:"penmiss"})}}}
+  for(let i=0;i<2;i++)if(T[i].rc)list.push({m:Math.ceil(rnd(20,88)),i,s:pick([1,1,1,1]),type:"red"});
+  list.sort((a,b)=>a.m-b.m);
+  const events=[];
+  const nm=(o,s)=>s===4?"another player":o.pl[s].n;
+  for(const g of list){
+    const o=T[g.i];let text;
+    if(g.type==="goal"||g.type==="pen"){o.g++;o.per[g.m>45?1:0]++;o.pl[g.s].g++;
+      if(g.a>=0)o.pl[g.a].a++;
+      text=g.type==="pen"?`Penalty goal: ${nm(o,g.s)}`:`Goal: ${nm(o,g.s)}${g.a>=0?` (assist ${nm(o,g.a)})`:""}`}
+    else if(g.type==="penmiss")text=`Penalty missed: ${nm(o,g.s)}`;
+    else text=`Red card: ${nm(o,g.s)}`;
+    events.push({when:g.m>90?`90+${g.m-90}′`:`${g.m}′`,i:g.i,text,run:`${T[0].g}–${T[1].g}`});
+  }
+  const winner=T[0].g>T[1].g?0:T[1].g>T[0].g?1:-1;
+  T.forEach((o,i)=>{const opp=T[1-i];const res=winner<0?0:winner===i?0.3:-0.2;
+    o.gk.ga=opp.g;o.gk.sv=Math.max(0,opp.sot-opp.g);
+    o.gk.rt=clamp(6.4+o.gk.sv*0.3-o.gk.ga*0.35+(opp.g===0?0.6:0)+res+normal(0,0.25),4,10);
+    o.pl.forEach(p=>p.rt=clamp(6.4+p.g*1.0+p.a*0.7+p.sh*0.08+res+normal(0,0.3),4,10))});
+  let top=null,best=-1;
+  T.forEach(o=>{[...o.pl.slice(0,4),o.gk].forEach(p=>{if(p.rt>best){best=p.rt;
+    top={n:p.n,team:o.t.a,line:p===o.gk?`${plural(p.sv,"save")}, rated ${p.rt.toFixed(1)}`:`${plural(p.g,"goal")}, ${plural(p.a,"assist")}, rated ${p.rt.toFixed(1)}`}}})});
+  const row=mkRow(T);
+  return{teams:[A,B],scores:[T[0].g,T[1].g],labels:["1st half","2nd half"],per:[T[0].per,T[1].per],
+    status:winner<0?"Full time, draw":"Full time",winner,events,top,
+    box:T.map(o=>[{cols:["Player","G","A","SH","SV","RTG"],
+      rows:[{c:[o.gk.n,0,0,"–",o.gk.sv,o.gk.rt.toFixed(1)]},...o.pl.map((p,i)=>({dim:i===4,c:[p.n,p.g,p.a,p.sh,"–",i===4?"–":p.rt.toFixed(1)]}))]}]),
+    stats:[
+      row("Possession",o=>o.pos+"%",o=>o.pos),
+      row("Shots",o=>o.sh),
+      row("Shots on target",o=>o.sot),
+      row("Expected goals (xG)",o=>o.xg.toFixed(2),o=>o.xg),
+      row("Passes",o=>o.passes),
+      row("Pass accuracy",o=>o.pacc+"%",o=>o.pacc),
+      row("Corners",o=>o.cor),
+      row("Fouls",o=>o.fouls,null,true),
+      row("Yellow cards",o=>o.yc,null,true),
+      row("Red cards",o=>o.rc,null,true),
+      row("Offsides",o=>o.off,null,true)]};
+}
+
+/* =========================================================
+   NFL: drive by drive
+   ========================================================= */
+function simNFL(A,B,neutral){
+  const e=edge(A,B,neutral,2.5);
+  const REC=[0,.12,.27,.20,.17,.24],RUSH=[.12,.68,0,0,0,.20];
+  const P=n=>({n,cmp:0,att:0,py:0,ptd:0,int:0,sck:0,car:0,ry:0,rtd:0,rec:0,rcy:0,rctd:0});
+  const T=[A,B].map((t,i)=>({t,es:i?e:-e,pts:0,py:0,ry:0,fd:0,to:0,sacks:0,pen:poisson(6),plays:0,top:0,per:[0,0,0,0],
+    pl:[...t.p.slice(0,5).map(P),P("Others")],k:{fgm:0,fga:0,xpm:0,xpa:0}}));
+  T.forEach(o=>o.penY=Math.round(o.pen*normal(8,1.5)));
+  const events=[];
+  function drive(i,q,ot){
+    const o=T[i],es=o.es,qb=o.pl[0];
+    const pTD=0.22*(1+1.8*es),pFG=0.17*(1+0.6*es),pTO=0.11*(1-1.2*es),pDN=0.05,pEnd=ot?0:0.03;
+    const r=R();let res;
+    if(r<pTD)res="td";else if(r<pTD+pFG)res="fg";else if(r<pTD+pFG+pTO)res="to";
+    else if(r<pTD+pFG+pTO+pDN)res="downs";else if(r<pTD+pFG+pTO+pDN+pEnd)res="end";else res="punt";
+    const mean={td:68,fg:45,to:20,downs:38,end:25,punt:17}[res];
+    const yd=Math.round(clamp(normal(mean,res==="punt"?13:14),res==="td"?15:-8,99));
+    const plays=Math.max(3,Math.round(yd/5.5+normal(2.5,1.5)));
+    o.plays+=plays;o.top+=plays*normal(27,3);
+    const pass=clamp(normal(0.6,0.12),0.2,0.95);
+    const how=res==="td"?(R()<pass?"pass":"run"):null;
+    const len=how==="pass"?Math.min(yd,Math.max(1,Math.round(rnd(3,45)))):Math.min(yd,Math.max(1,Math.round(rnd(1,22))));
+    let pyd,ryd;
+    if(yd<=0){pyd=0;ryd=yd}else{pyd=Math.round(yd*pass);ryd=yd-pyd}
+    if(how==="pass"&&pyd<len){pyd=Math.min(yd,Math.max(pyd,len));ryd=yd-pyd}
+    if(how==="run"&&ryd<len){ryd=len;pyd=yd-ryd}
+    // passing
+    const cmp=pyd>0?Math.max(1,Math.round(pyd/11+normal(0,0.6))):0;
+    qb.cmp+=cmp;qb.att+=Math.max(cmp,Math.round(cmp/0.65+normal(0,0.5)));qb.py+=pyd;o.py+=pyd;
+    let lastRec=-1;split(pyd,cmp).forEach(y=>{const k=pick(REC);o.pl[k].rec++;o.pl[k].rcy+=y;lastRec=k});
+    // rushing
+    const car=(ryd!==0||how==="run")?Math.max(1,Math.round(Math.abs(ryd)/4.4+normal(0,0.7))):(R()<0.5?1:0);
+    let lastRush=-1;split(ryd,car).forEach(y=>{const k=pick(RUSH);o.pl[k].car++;o.pl[k].ry+=y;lastRush=k});
+    o.ry+=ryd;
+    o.fd+=Math.max(0,Math.round(yd/17+normal(0,0.6)));
+    if(R()<0.16){o.sacks++;qb.sck++;qb.att++}
+    let pts=0,text="";
+    if(res==="td"){
+      const pat=R()<0.94;o.k.xpa++;if(pat)o.k.xpm++;pts=6+(pat?1:0);
+      if(how==="pass"&&lastRec>=0){qb.ptd++;o.pl[lastRec].rctd++;text=`${len}-yd TD catch: ${lastRec===5?"teammate":last(o.pl[lastRec].n)} from ${last(qb.n)}`}
+      else{const k=lastRush>=0?lastRush:1;o.pl[k].rtd++;text=`${len}-yd TD run: ${k===5?"teammate":last(o.pl[k].n)}`}
+      if(!pat)text+=" (PAT missed)";
+    }
+    else if(res==="fg"){const dist=Math.round(clamp(normal(38,8),20,60));o.k.fga++;
+      if(R()<clamp(1.35-0.013*dist,0.4,0.99)){o.k.fgm++;pts=3;text=`${dist}-yd field goal`}}
+    else if(res==="to"){o.to++;if(R()<pass)qb.int++}
+    if(pts){o.pts+=pts;o.per[q]+=pts;events.push({when:ot?"OT":"Q"+(q+1),i,text,run:`${T[0].pts}–${T[1].pts}`})}
+  }
+  const N=2*Math.round(clamp(normal(11,0.8),9,13));
+  const first=R()<0.5?0:1;
+  for(let d=0;d<N;d++)drive((first+d)%2,Math.min(3,Math.floor(d*4/N)),false);
+  const labels=["1","2","3","4"];let status="Final";
+  if(T[0].pts===T[1].pts){
+    labels.push("OT");T.forEach(t=>t.per.push(0));
+    const s=R()<0.5?0:1;drive(s,4,true);drive(1-s,4,true);
+    let k=0;while(T[0].pts===T[1].pts&&k<3){drive((s+k)%2,4,true);k++}
+    status=T[0].pts===T[1].pts?"Final, tie":"Final/OT";
+  }
+  const tot=T[0].top+T[1].top,len=labels.length>4?4200:3600;
+  T.forEach(o=>o.topS=o.top/tot*len);
+  const winner=T[0].pts>T[1].pts?0:T[1].pts>T[0].pts?1:-1;
+  let top=null,best=-1e9;
+  T.forEach((o,i)=>o.pl.slice(0,5).forEach((p,j)=>{
+    const sc=(j===0?p.py/25+p.ptd*4-p.int*2:0)+(p.ry+p.rcy)/10+(p.rtd+p.rctd)*6+(i===winner?2:0);
+    if(sc>best){best=sc;
+      const parts=[];
+      if(j===0)parts.push(`${p.cmp}/${p.att}, ${p.py} passing yds, ${plural(p.ptd,"TD")}${p.int?`, ${plural(p.int,"INT")}`:""}`);
+      if(p.car&&(j!==0||p.ry>=20))parts.push(`${p.ry} rushing yds`);
+      if(p.rec)parts.push(`${plural(p.rec,"catch")}`.replace("catchs","catches")+`, ${p.rcy} receiving yds`);
+      if(j!==0&&p.rtd+p.rctd)parts.push(plural(p.rtd+p.rctd,"TD"));
+      top={n:p.n,team:o.t.a,line:parts.join(", ")}}}));
+  const row=mkRow(T);
+  return{teams:[A,B],scores:[T[0].pts,T[1].pts],labels,per:[T[0].per,T[1].per],status,winner,events,top,
+    box:T.map(o=>{const qb=o.pl[0];return[
+      {cols:["Passing","C/ATT","YDS","TD","INT","SCK"],rows:[{c:[qb.n,`${qb.cmp}/${qb.att}`,qb.py,qb.ptd,qb.int,qb.sck]}]},
+      {cols:["Rushing","CAR","YDS","AVG","TD"],rows:o.pl.filter(p=>p.car).map(p=>({dim:p.n==="Others",c:[p.n,p.car,p.ry,(p.ry/p.car).toFixed(1),p.rtd]}))},
+      {cols:["Receiving","REC","YDS","AVG","TD"],rows:o.pl.filter(p=>p.rec).map(p=>({dim:p.n==="Others",c:[p.n,p.rec,p.rcy,(p.rcy/p.rec).toFixed(1),p.rctd]}))},
+      {cols:["Kicking","FG","XP","PTS"],rows:[{c:["Kicker",`${o.k.fgm}/${o.k.fga}`,`${o.k.xpm}/${o.k.xpa}`,o.k.fgm*3+o.k.xpm]}]}]}),
+    stats:[
+      row("Total yards",o=>o.py+o.ry),
+      row("Passing yards",o=>o.py),
+      row("Rushing yards",o=>o.ry),
+      row("First downs",o=>o.fd),
+      row("Turnovers",o=>o.to,null,true),
+      row("Sacks allowed",o=>o.sacks,null,true),
+      row("Penalties",o=>`${o.pen} for ${o.penY} yds`,o=>o.penY,true),
+      row("Time of possession",o=>mmss(o.topS),o=>o.topS)]};
+}
+
+const SIM={nba:simNBA,nhl:simNHL,soc:simSOC,nfl:simNFL};
+if(typeof module!=="undefined")module.exports={SIM,TEAMS,ROLES};
+
+/* =========================================================
+   UI
+   ========================================================= */
+if(typeof document!=="undefined"){
+const $=id=>document.getElementById(id);
+let sport="nba",lastGame=null,boxTeam=0;
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function rawTeam(a){for(const g of Object.values(TEAMS[sport]))for(const t of g)if(t[0]===a)return t;return null}
+function roster(a){
+  const t=rawTeam(a),def=t[3].split("|"),saved=store.get(`sim-roster:${sport}:${a}`);
+  if(!Array.isArray(saved))return def;
+  return def.map((d,i)=>(saved[i]&&saved[i].trim())||d);
+}
+const findTeam=a=>{const t=rawTeam(a);return{a:t[0],n:t[1],r:t[2],p:roster(a)}};
+
+function fillSelects(){
+  const saved=store.get("sim-"+sport)||DEFAULTS[sport];
+  for(const [id,val] of [["away",saved[0]],["home",saved[1]]]){
+    const sel=$(id);sel.innerHTML="";
+    for(const [g,list] of Object.entries(TEAMS[sport])){
+      const og=document.createElement("optgroup");og.label=g;
+      for(const t of [...list].sort((x,y)=>x[1].localeCompare(y[1]))){const o=document.createElement("option");o.value=t[0];o.textContent=`${t[1]} (${t[2]})`;og.appendChild(o)}
+      sel.appendChild(og);
+    }
+    sel.value=rawTeam(val)?val:DEFAULTS[sport][id==="away"?0:1];
+  }
+  $("neutral").checked=!!store.get("sim-neutral-"+sport);
+  fillRosters();
+}
+function fillRosters(){
+  $("rosterHint").textContent="One name per line, in this order: "+ROLES[sport].join(", ")+". Changes save automatically on this phone.";
+  for(const id of ["away","home"]){
+    const t=rawTeam($(id).value);
+    $(id+"RosterLabel").textContent=`${t[1]} players`;
+    const ta=$(id+"Roster");ta.value=roster(t[0]).join("\n");ta.rows=ROLES[sport].length;
+  }
+}
+function saveRoster(id){
+  const a=$(id).value,lines=$(id+"Roster").value.split("\n").map(s=>s.trim());
+  if(lines.every(s=>!s))store.del(`sim-roster:${sport}:${a}`);else store.set(`sim-roster:${sport}:${a}`,lines.slice(0,ROLES[sport].length));
+}
+function setSport(s){
+  sport=s;
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.s===s?"true":"false"));
+  fillSelects();
+  $("board").innerHTML='<div class="empty">Pick your teams, then press Play game.</div>';
+  $("details").innerHTML="";
+  store.set("sim-sport",s);
+}
+function save(){store.set("sim-"+sport,[$("away").value,$("home").value]);store.set("sim-neutral-"+sport,$("neutral").checked);fillRosters()}
+function picked(){
+  const A=findTeam($("away").value),B=findTeam($("home").value);
+  if(A.a===B.a){$("board").innerHTML='<div class="empty">Pick two different teams to play a game.</div>';$("details").innerHTML="";return null}
+  return[A,B];
+}
+function countUp(el,to){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches||to===0){el.textContent=to;return}
+  const t0=performance.now(),dur=700;
+  const step=t=>{const k=Math.min(1,(t-t0)/dur);el.textContent=Math.round(to*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(step)};
+  requestAnimationFrame(step);
+}
+function boxHTML(g){
+  const tabs=`<div class="seg boxtabs" role="tablist">${g.teams.map((t,i)=>`<button role="tab" data-box="${i}" aria-selected="${i===boxTeam}">${esc(t.a)}</button>`).join("")}</div>`;
+  const tables=g.box[boxTeam].map(tb=>{if(!tb.rows.length)return"";
+    return`<div class="card tbl-wrap"><table class="ptable"><thead><tr>${tb.cols.map(c=>`<th scope="col">${esc(c)}</th>`).join("")}</tr></thead><tbody>${
+      tb.rows.map(r=>`<tr>${r.c.map((v,i)=>`<td${i===0&&r.dim?' class="dim"':""}>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}).join("");
+  return tabs+tables;
+}
+function renderGame(g){
+  lastGame=g;boxTeam=g.winner===1?1:0;
+  const tr=i=>{const lose=g.winner>=0&&g.winner!==i;
+    return`<div class="trow${lose?" lose":""}"><span class="abbr">${esc(g.teams[i].a)}</span><span class="nm"><span class="nmt">${esc(g.teams[i].n)}</span>${g.winner===i?'<span class="win-tag">Win</span>':""}</span><span class="sc" data-v="${g.scores[i]}">0</span></div>`};
+  const head=g.labels.map(l=>`<th>${esc(l)}</th>`).join("");
+  const line=i=>`<tr><td>${esc(g.teams[i].a)}</td>${g.per[i].map(v=>`<td>${v}</td>`).join("")}<td>${g.scores[i]}</td></tr>`;
+  $("board").innerHTML=`<div class="status">${esc(g.status)}</div>${tr(0)}${tr(1)}
+    <div class="ls-wrap"><table class="ls"><thead><tr><th></th>${head}<th>T</th></tr></thead><tbody>${line(0)}${line(1)}</tbody></table></div>
+    ${g.top?`<div class="star">Player of the game: <b>${esc(g.top.n)}</b> (${esc(g.top.team)}), ${esc(g.top.line)}</div>`:""}`;
+  $("board").querySelectorAll(".sc").forEach(el=>countUp(el,+el.dataset.v));
+
+  let html=`<h2>Player stats</h2><div id="boxArea">${boxHTML(g)}</div>`;
+  html+=`<h2>Team stats</h2><div class="card stats">
+    <div class="srow"><div class="sline"><span class="l">${esc(g.teams[0].a)}</span><span class="lab"></span><span class="r">${esc(g.teams[1].a)}</span></div></div>`;
+  for(const s of g.stats){
+    const tot=(s.av+s.bv)||1,a=s.av/tot*100,b=s.bv/tot*100;
+    const aLead=s.low?s.av<s.bv:s.av>s.bv,bLead=s.low?s.bv<s.av:s.bv>s.av;
+    html+=`<div class="srow"><div class="sline"><span class="l">${esc(s.a)}</span><span class="lab">${esc(s.label)}</span><span class="r">${esc(s.b)}</span></div>
+      <div class="bar" aria-hidden="true"><span class="${aLead?"on":""}" style="flex:${a.toFixed(1)}"></span><span class="${bLead?"on":""}" style="flex:${b.toFixed(1)}"></span></div></div>`;
+  }
+  html+="</div>";
+  if(g.events){
+    html+=`<h2>${sport==="soc"?"Match events":"Scoring summary"}</h2>`;
+    if(!g.events.length)html+=`<p class="note">No scoring in this one.</p>`;
+    else html+=`<ul class="card events">${g.events.map(ev=>`<li><span class="when">${esc(ev.when)}</span><span><span class="who">${esc(g.teams[ev.i].a)}</span>${esc(ev.text)}</span><span class="run">${esc(ev.run)}</span></li>`).join("")}</ul>`;
+  }
+  $("details").innerHTML=html;
+}
+function renderMany(A,B){
+  lastGame=null;
+  const n=1000,neutral=$("neutral").checked;let w=[0,0],d=0,pts=[0,0];const freq={},stars={};
+  for(let i=0;i<n;i++){const g=SIM[sport](A,B,neutral);if(g.winner<0)d++;else w[g.winner]++;
+    pts[0]+=g.scores[0];pts[1]+=g.scores[1];const k=`${g.scores[0]}–${g.scores[1]}`;freq[k]=(freq[k]||0)+1;
+    if(g.top){const key=g.top.n+"|"+g.top.team;stars[key]=(stars[key]||0)+1}}
+  const top=Object.entries(freq).sort((x,y)=>y[1]-x[1])[0];
+  const star=Object.entries(stars).sort((x,y)=>y[1]-x[1])[0];
+  const p=v=>(v/n*100).toFixed(1)+"%";
+  const avg=[(pts[0]/n).toFixed(1),(pts[1]/n).toFixed(1)];
+  const fav=w[0]>=w[1]?0:1;
+  $("board").innerHTML=`<div class="status">1,000 games</div>
+    <div class="trow${fav!==0?" lose":""}"><span class="abbr">${esc(A.a)}</span><span class="nm">${esc(A.n)}</span><span class="sc">${Math.round(w[0]/n*100)}%</span></div>
+    <div class="trow${fav!==1?" lose":""}"><span class="abbr">${esc(B.a)}</span><span class="nm">${esc(B.n)}</span><span class="sc">${Math.round(w[1]/n*100)}%</span></div>`;
+  const bar=(label,v,cls)=>`<div class="orow ${cls||""}"><div class="top"><span>${esc(label)}</span><span>${p(v)}</span></div><div class="track"><div class="fill" style="width:${v/n*100}%"></div></div></div>`;
+  $("details").innerHTML=`<h2>Win chances</h2><div class="card odds">${bar(A.n+" win",w[0])}${bar(B.n+" win",w[1])}${d?bar(sport==="soc"?"Draw":"Tie",d,"draw"):""}
+    <p class="note">Average score: ${esc(A.a)} ${avg[0]}, ${esc(B.a)} ${avg[1]}</p>
+    <p class="note">Most common result: ${esc(A.a)} ${top[0]} ${esc(B.a)} (${top[1]} times)</p>
+    ${star?`<p class="note">Most often player of the game: ${esc(star[0].split("|")[0])} (${star[1]} times)</p>`:""}</div>`;
+}
+
+document.querySelectorAll("#tabs button").forEach(b=>b.addEventListener("click",()=>setSport(b.dataset.s)));
+$("swap").addEventListener("click",()=>{const a=$("away").value;$("away").value=$("home").value;$("home").value=a;save()});
+["away","home","neutral"].forEach(id=>$(id).addEventListener("change",save));
+["away","home"].forEach(id=>$(id+"Roster").addEventListener("input",()=>saveRoster(id)));
+$("resetRoster").addEventListener("click",()=>{["away","home"].forEach(id=>store.del(`sim-roster:${sport}:${$(id).value}`));fillRosters()});
+$("details").addEventListener("click",ev=>{const b=ev.target.closest("[data-box]");if(!b||!lastGame)return;boxTeam=+b.dataset.box;$("boxArea").innerHTML=boxHTML(lastGame)});
+$("play").addEventListener("click",()=>{const t=picked();if(!t)return;renderGame(SIM[sport](t[0],t[1],$("neutral").checked));$("board").scrollIntoView({behavior:"smooth",block:"start"})});
+$("many").addEventListener("click",()=>{const t=picked();if(!t)return;renderMany(t[0],t[1]);$("board").scrollIntoView({behavior:"smooth",block:"start"})});
+const s0=store.get("sim-sport");setSport(SIM[s0]?s0:"nba");
+}
+</script>
+</body>
+</html>

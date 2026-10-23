@@ -1,0 +1,14 @@
+{
+  "name": "Sim Night",
+  "short_name": "Sim Night",
+  "description": "Simulate NBA, NHL, soccer and NFL games with full player stats.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0F1D30",
+  "theme_color": "#0F1D30",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
